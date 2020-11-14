@@ -35,7 +35,6 @@ import io.quarkus.hibernate.orm.panache.runtime.JpaOperations;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.runtime.util.HashUtil;
 import io.quarkus.spring.data.deployment.DotNames;
-import io.quarkus.spring.data.deployment.MethodNameParser;
 import io.quarkus.spring.data.runtime.TypesConverter;
 
 public class CustomQueryMethodsAdder extends AbstractMethodsAdder {
@@ -46,6 +45,8 @@ public class CustomQueryMethodsAdder extends AbstractMethodsAdder {
     private static final Pattern SELECT_CLAUSE = Pattern.compile("select\\s+(.+)\\s+from", Pattern.CASE_INSENSITIVE);
     private static final Pattern FIELD_ALIAS = Pattern.compile(".*\\s+[as|AS]+\\s+([\\w\\.]+)");
     private static final Pattern FIELD_NAME = Pattern.compile("(\\w+).*");
+    private static final Pattern SELECT_CLAUSE_AND_REMAINING = Pattern.compile("(select)\\s(.*?)\\s(from\\s.*)$",
+            Pattern.CASE_INSENSITIVE);
 
     private final IndexView index;
     private final ClassOutput nonBeansClassOutput;
@@ -225,20 +226,36 @@ public class CustomQueryMethodsAdder extends AbstractMethodsAdder {
                                         "a delete or update query");
                     }
                 } else {
-                    // by default just hope that adding select count(*) will do
-                    String countQueryString = "SELECT COUNT(*) " + queryString;
-                    if (queryInstance.value(QUERY_COUNT_FIELD) != null) { // if a countQuery is specified, use it
-                        countQueryString = queryInstance.value(QUERY_COUNT_FIELD).asString().trim();
-                    } else {
-                        // otherwise try and derive the select query from the method name and use that to construct the count query
-                        MethodNameParser methodNameParser = new MethodNameParser(repositoryClassInfo, index);
-                        try {
-                            MethodNameParser.Result parseResult = methodNameParser.parse(method);
-                            if (MethodNameParser.QueryType.SELECT == parseResult.getQueryType()) {
-                                countQueryString = "SELECT COUNT (*) " + parseResult.getQuery();
+                    String countQueryString = "";
+                    if (pageableParameterIndex != null) {
+                        if (queryInstance.value(QUERY_COUNT_FIELD) != null) { // if a countQuery is specified, use it
+                            countQueryString = queryInstance.value(QUERY_COUNT_FIELD).asString().trim();
+                        } else {
+                            Matcher queryMatcher = SELECT_CLAUSE_AND_REMAINING.matcher(queryString);
+                            if (queryMatcher.find() && !queryMatcher.group(2).contains(",")) {
+                                countQueryString = queryMatcher.replaceFirst("$1 COUNT($2) $3");
+                            } else {
+                                throw new IllegalArgumentException(
+                                        method.name() + " of Repository " + repositoryClassInfo
+                                                + " uses paging and a complex query and therefore needs an explicitly defined countQuery.");
                             }
-                        } catch (Exception ignored) {
-                            // we just ignore the exception if the method does not match one of the supported styles
+
+                            /*
+                             * TODO: Why? we have already a query String
+                             * // otherwise try and derive the select query from the method name and use that to construct the
+                             * count
+                             * query
+                             * MethodNameParser methodNameParser = new MethodNameParser(repositoryClassInfo, index);
+                             * try {
+                             * MethodNameParser.Result parseResult = methodNameParser.parse(method);
+                             * if (MethodNameParser.QueryType.SELECT == parseResult.getQueryType()) {
+                             * countQueryString = "SELECT COUNT (*) " + parseResult.getQuery();
+                             * }
+                             * } catch (Exception ignored) {
+                             * // we just ignore the exception if the method does not match one of the supported styles
+                             * }
+                             *
+                             */
                         }
                     }
 
@@ -493,10 +510,6 @@ public class CustomQueryMethodsAdder extends AbstractMethodsAdder {
                 }
             }
         }
-    }
-
-    private boolean isSupportedJavaLangType(DotName dotName) {
-        return isIntLongOrBoolean(dotName) || dotName.equals(DotNames.OBJECT) || dotName.equals(DotNames.STRING);
     }
 
     private ResultHandle castReturnValue(MethodCreator methodCreator, ResultHandle resultHandle, String type) {
