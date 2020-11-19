@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.jboss.jandex.AnnotationInstance;
+import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.FieldInfo;
@@ -346,14 +347,23 @@ public class MethodNameParser {
     private FieldInfo resolveNestedField(Supplier<String> offendingMethodMessageSupplier, String fieldPathExpression,
             StringBuilder fieldPathBuilder) {
 
+        String fieldNotResolvableMessage = "Entity " + this.entityClass + " does not contain a field named: "
+                + fieldPathExpression + ". ";
+
         ClassInfo parentClassInfo = this.entityClass;
         FieldInfo fieldInfo = null;
 
         int fieldStartIndex = 0;
         while (fieldStartIndex < fieldPathExpression.length()) {
+            if (fieldPathExpression.charAt(fieldStartIndex) == '_') {
+                fieldStartIndex++;
+                if (fieldStartIndex >= fieldPathExpression.length()) {
+                    throw new UnableToParseMethodException(fieldNotResolvableMessage + offendingMethodMessageSupplier.get());
+                }
+            }
             MutableReference<List<ClassInfo>> parentSuperClassInfos = new MutableReference<>();
             // the underscore character is treated as reserved character to manually define traversal points.
-            int firstSeparator = fieldPathExpression.indexOf('_');
+            int firstSeparator = fieldPathExpression.indexOf('_', fieldStartIndex);
             int fieldEndIndex = firstSeparator == -1 ? fieldPathExpression.length() : firstSeparator;
             while (fieldEndIndex >= fieldStartIndex) {
                 String simpleFieldName = lowerFirstLetter(fieldPathExpression.substring(fieldStartIndex, fieldEndIndex));
@@ -364,10 +374,13 @@ public class MethodNameParser {
                 fieldEndIndex = previousPotentialFieldEnd(fieldPathExpression, fieldStartIndex, fieldEndIndex);
             }
             if (fieldInfo == null) {
-                String notMatched = lowerFirstLetter(fieldPathExpression.substring(fieldStartIndex));
+                String detail = "";
+                if (fieldStartIndex > 0) {
+                    String notMatched = lowerFirstLetter(fieldPathExpression.substring(fieldStartIndex));
+                    detail = "Can not resolve " + parentClassInfo + "." + notMatched + ". ";
+                }
                 throw new UnableToParseMethodException(
-                        "Entity " + this.entityClass + " does not contain a field named: " + fieldPathBuilder +
-                                ". " + offendingMethodMessageSupplier.get());
+                        fieldNotResolvableMessage + detail + offendingMethodMessageSupplier.get());
             }
             if (fieldPathBuilder.length() > 0) {
                 fieldPathBuilder.append('.');
@@ -482,8 +495,9 @@ public class MethodNameParser {
 
     private String getEntityName() {
         AnnotationInstance annotationInstance = entityClass.classAnnotation(DotNames.JPA_ENTITY);
-        if (annotationInstance != null && annotationInstance.value("name").asString().length() > 0) {
-            return annotationInstance.value("name").asString();
+        if (annotationInstance != null && annotationInstance.value("name") != null) {
+            AnnotationValue annotationValue = annotationInstance.value("name");
+            return annotationValue.asString().length() > 0 ? annotationValue.asString() : entityClass.simpleName();
         }
         return entityClass.simpleName();
     }
