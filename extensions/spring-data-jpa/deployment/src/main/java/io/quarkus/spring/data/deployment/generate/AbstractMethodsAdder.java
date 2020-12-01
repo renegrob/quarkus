@@ -1,6 +1,8 @@
 package io.quarkus.spring.data.deployment.generate;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -119,7 +121,7 @@ public abstract class AbstractMethodsAdder {
                     MethodDescriptor.ofMethod(Optional.class, "empty", Optional.class));
             catchBlock.returnValue(emptyOptional);
         } else if (DotNames.LIST.equals(returnType) || DotNames.COLLECTION.equals(returnType)
-                || DotNames.ITERATOR.equals(returnType)) {
+                || DotNames.SET.equals(returnType) || DotNames.ITERATOR.equals(returnType)) {
             ResultHandle list;
 
             if (customResultType == null) {
@@ -158,6 +160,11 @@ public abstract class AbstractMethodsAdder {
                         MethodDescriptor.ofMethod(Iterable.class, "iterator", Iterator.class),
                         list);
                 methodCreator.returnValue(iterator);
+            } else if (DotNames.SET.equals(returnType)) {
+                // TODO: implement other types supported by org.springframework.core.convert.support.DefaultConversionService
+                ResultHandle set = methodCreator.newInstance(
+                        MethodDescriptor.ofConstructor(LinkedHashSet.class, Collection.class), list);
+                methodCreator.returnValue(set);
             }
             methodCreator.returnValue(list);
 
@@ -203,7 +210,7 @@ public abstract class AbstractMethodsAdder {
 
             methodCreator.returnValue(sliceResult);
 
-        } else if (isIntLongOrBoolean(returnType)) {
+        } else if (isSupportedJavaLangType(returnType)) {
             ResultHandle singleResult = methodCreator.invokeInterfaceMethod(
                     MethodDescriptor.ofMethod(PanacheQuery.class, "singleResult", Object.class),
                     panacheQuery);
@@ -213,6 +220,10 @@ public abstract class AbstractMethodsAdder {
                     "Return type of method " + methodName + " of Repository " + repositoryClassInfo
                             + " does not match find query type");
         }
+    }
+
+    protected boolean isSupportedJavaLangType(DotName dotName) {
+        return isIntLongOrBoolean(dotName) || dotName.equals(DotNames.OBJECT) || dotName.equals(DotNames.STRING);
     }
 
     protected boolean isIntLongOrBoolean(DotName dotName) {

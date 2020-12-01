@@ -105,6 +105,8 @@ public class StockMethodsAdder {
         generateDelete(classCreator, generatedClassName, entityTypeStr, allMethodsToBeImplementedToResult);
         generateDeleteAllWithIterable(classCreator, generatedClassName, entityTypeStr, allMethodsToBeImplementedToResult);
         generateDeleteAll(classCreator, entityClassFieldDescriptor, generatedClassName, allMethodsToBeImplementedToResult);
+        generateDeleteAllInBatch(classCreator, entityClassFieldDescriptor, generatedClassName,
+                allMethodsToBeImplementedToResult);
 
         handleUnimplementedMethods(classCreator, allMethodsToBeImplementedToResult);
     }
@@ -895,6 +897,26 @@ public class StockMethodsAdder {
                 }
             }
             allMethodsToBeImplementedToResult.put(deleteAllDescriptor, true);
+        }
+    }
+
+    private void generateDeleteAllInBatch(ClassCreator classCreator, FieldDescriptor entityClassFieldDescriptor,
+            String generatedClassName, Map<MethodDescriptor, Boolean> allMethodsToBeImplementedToResult) {
+
+        MethodDescriptor deleteAllInBatchDescriptor = MethodDescriptor.ofMethod(generatedClassName, "deleteAllInBatch",
+                void.class);
+
+        if (allMethodsToBeImplementedToResult.containsKey(deleteAllInBatchDescriptor)) {
+            if (!classCreator.getExistingMethods().contains(deleteAllInBatchDescriptor)) {
+                try (MethodCreator deleteAll = classCreator.getMethodCreator(deleteAllInBatchDescriptor)) {
+                    deleteAll.addAnnotation(Transactional.class);
+                    deleteAll.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(JpaOperations.class, "deleteAll", long.class, Class.class.getName()),
+                            deleteAll.readInstanceField(entityClassFieldDescriptor, deleteAll.getThis()));
+                    deleteAll.returnValue(null);
+                }
+            }
+            allMethodsToBeImplementedToResult.put(deleteAllInBatchDescriptor, true);
         }
     }
 

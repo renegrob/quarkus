@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
@@ -70,6 +71,7 @@ public final class DotNames {
     public static final DotName JPA_ID = DotName.createSimple(Id.class.getName());
     public static final DotName VERSION = DotName.createSimple(Version.class.getName());
     public static final DotName JPA_MAPPED_SUPERCLASS = DotName.createSimple(MappedSuperclass.class.getName());
+    public static final DotName JPA_ENTITY = DotName.createSimple(Entity.class.getName());;
     public static final DotName VOID = DotName.createSimple(void.class.getName());
     public static final DotName LONG = DotName.createSimple(Long.class.getName());
     public static final DotName PRIMITIVE_LONG = DotName.createSimple(long.class.getName());
@@ -91,6 +93,7 @@ public final class DotNames {
     public static final DotName ITERATOR = DotName.createSimple(Iterator.class.getName());
     public static final DotName COLLECTION = DotName.createSimple(Collection.class.getName());
     public static final DotName LIST = DotName.createSimple(List.class.getName());
+    public static final DotName SET = DotName.createSimple(Set.class.getName());
     public static final DotName STREAM = DotName.createSimple(Stream.class.getName());
     public static final DotName OPTIONAL = DotName.createSimple(Optional.class.getName());
     public static final DotName OBJECT = DotName.createSimple(Object.class.getName());
