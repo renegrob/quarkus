@@ -166,6 +166,7 @@ public abstract class AbstractMethodsAdder {
                         list);
                 methodCreator.returnValue(iterator);
             } else if (DotNames.SET.equals(returnType)) {
+                // TODO: implement other types supported by org.springframework.core.convert.support.DefaultConversionService
                 ResultHandle set = methodCreator.newInstance(
                         MethodDescriptor.ofConstructor(LinkedHashSet.class, Collection.class), list);
                 methodCreator.returnValue(set);
@@ -214,7 +215,7 @@ public abstract class AbstractMethodsAdder {
 
             methodCreator.returnValue(sliceResult);
 
-        } else if (isIntLongOrBoolean(returnType)) {
+        } else if (isSupportedJavaLangType(returnType)) {
             ResultHandle singleResult = methodCreator.invokeInterfaceMethod(
                     MethodDescriptor.ofMethod(PanacheQuery.class, "singleResult", Object.class),
                     panacheQuery);
@@ -254,6 +255,10 @@ public abstract class AbstractMethodsAdder {
                     MethodDescriptor.ofMethod(RepositorySupport.class, "clear", void.class, Class.class),
                     methodCreator.readInstanceField(entityClassFieldDescriptor, methodCreator.getThis()));
         }
+    }
+
+    protected boolean isSupportedJavaLangType(DotName dotName) {
+        return isIntLongOrBoolean(dotName) || dotName.equals(DotNames.OBJECT) || dotName.equals(DotNames.STRING);
     }
 
     protected boolean isIntLongOrBoolean(DotName dotName) {

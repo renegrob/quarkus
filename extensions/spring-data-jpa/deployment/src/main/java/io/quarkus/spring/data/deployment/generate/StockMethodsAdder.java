@@ -1,8 +1,5 @@
 package io.quarkus.spring.data.deployment.generate;
 
-import static io.quarkus.gizmo.FieldDescriptor.of;
-import static io.quarkus.gizmo.MethodDescriptor.ofMethod;
-
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
@@ -45,11 +41,15 @@ import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations;
 import io.quarkus.hibernate.orm.panache.runtime.AdditionalJpaOperations;
+import io.quarkus.hibernate.orm.panache.runtime.JpaOperations;
 import io.quarkus.panache.common.deployment.TypeBundle;
 import io.quarkus.spring.data.deployment.DotNames;
 import io.quarkus.spring.data.runtime.FunctionalityNotImplemented;
 import io.quarkus.spring.data.runtime.RepositorySupport;
 import io.quarkus.spring.data.runtime.TypesConverter;
+
+import static io.quarkus.gizmo.FieldDescriptor.of;
+import static io.quarkus.gizmo.MethodDescriptor.ofMethod;
 
 public class StockMethodsAdder {
 

@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jboss.jandex.AnnotationInstance;
+import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.FieldInfo;
@@ -87,14 +89,16 @@ public class MethodNameParser {
 
     public Result parse(MethodInfo methodInfo) {
         String methodName = methodInfo.name();
+        String fullyQualifiedMethod = methodInfo.declaringClass() + "." + methodInfo.name();
+        String offendingMethodMessage = "Offending method is " + fullyQualifiedMethod + ".";
         QueryType queryType = getType(methodName);
         if (queryType == null) {
-            throw new UnableToParseMethodException("Repository method " + methodName + " cannot be parsed");
+            throw new UnableToParseMethodException("Repository method " + fullyQualifiedMethod + " cannot be parsed");
         }
 
         int byIndex = methodName.indexOf("By");
         if ((byIndex == -1) || (byIndex + 2 >= methodName.length())) {
-            throw new UnableToParseMethodException("Repository method " + methodName + " cannot be parsed");
+            throw new UnableToParseMethodException("Repository method " + fullyQualifiedMethod + " cannot be parsed");
         }
 
         // handle 'Top' and 'First'
@@ -112,17 +116,17 @@ public class MethodNameParser {
                 }
             } catch (Exception e) {
                 throw new UnableToParseMethodException(
-                        "Unable to parse query with limiting results clause. Offending method is " + methodName);
+                        "Unable to parse query with limiting results clause. " + offendingMethodMessage);
             }
         }
         if ((topCount != null) && (queryType != QueryType.SELECT)) {
             throw new UnableToParseMethodException(
-                    "When 'Top' or 'First' is specified, the query must be a find query. Offending method is " + methodName);
+                    "When 'Top' or 'First' is specified, the query must be a find query. " + offendingMethodMessage);
         }
 
         if (methodName.substring(0, byIndex).contains("Distinct")) {
             throw new UnableToParseMethodException(
-                    "Distinct is not yet supported. Offending method is " + methodName);
+                    "Distinct is not yet supported. " + offendingMethodMessage);
         }
 
         // handle 'AllIgnoreCase'
@@ -139,7 +143,7 @@ public class MethodNameParser {
             int orderByIndex = afterByPart.indexOf(ORDER_BY);
             if (orderByIndex + ORDER_BY.length() == afterByPart.length()) {
                 throw new UnableToParseMethodException(
-                        "A field must by supplied after 'OrderBy' . Offending method is " + methodName);
+                        "A field must by supplied after 'OrderBy' . " + offendingMethodMessage);
             }
             String afterOrderByPart = afterByPart.substring(orderByIndex + ORDER_BY.length());
             afterByPart = afterByPart.substring(0, orderByIndex);
@@ -155,8 +159,8 @@ public class MethodNameParser {
             if (!entityContainsField(orderField)) {
                 throw new UnableToParseMethodException(
                         "Field " + orderField
-                                + " which was configured as the order field does not exist in the entity. Offending method is "
-                                + methodName);
+                                + " which was configured as the order field does not exist in the entity. "
+                                + offendingMethodMessage);
             }
 
             if (ascending) {
@@ -171,8 +175,8 @@ public class MethodNameParser {
         boolean containsOr = containsLogicOperator(afterByPart, "Or");
         if (containsAnd && containsOr) {
             throw new UnableToParseMethodException(
-                    "'And' and 'Or' clauses cannot be mixed in a method name - Try specifying the Query with the @Query annotation. Offending method is "
-                            + methodName);
+                    "'And' and 'Or' clauses cannot be mixed in a method name - Try specifying the Query with the @Query annotation. "
+                            + offendingMethodMessage);
         }
         if (containsAnd) {
             parts = Arrays.asList(afterByPart.split("And"));
@@ -488,7 +492,11 @@ public class MethodNameParser {
     }
 
     private String getEntityName() {
-        // TODO: not true?
+        AnnotationInstance annotationInstance = entityClass.classAnnotation(DotNames.JPA_ENTITY);
+        if (annotationInstance != null && annotationInstance.value("name") != null) {
+            AnnotationValue annotationValue = annotationInstance.value("name");
+            return annotationValue.asString().length() > 0 ? annotationValue.asString() : entityClass.simpleName();
+        }
         return entityClass.simpleName();
     }
 

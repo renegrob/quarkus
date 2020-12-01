@@ -513,10 +513,6 @@ public class CustomQueryMethodsAdder extends AbstractMethodsAdder {
         }
     }
 
-    private boolean isSupportedJavaLangType(DotName dotName) {
-        return isIntLongOrBoolean(dotName) || dotName.equals(DotNames.OBJECT) || dotName.equals(DotNames.STRING);
-    }
-
     private ResultHandle castReturnValue(MethodCreator methodCreator, ResultHandle resultHandle, String type) {
         switch (type) {
             case "I":
