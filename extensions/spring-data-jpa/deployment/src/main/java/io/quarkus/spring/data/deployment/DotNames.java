@@ -1,5 +1,6 @@
 package io.quarkus.spring.data.deployment;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -97,6 +98,8 @@ public final class DotNames {
     public static final DotName STREAM = DotName.createSimple(Stream.class.getName());
     public static final DotName OPTIONAL = DotName.createSimple(Optional.class.getName());
     public static final DotName OBJECT = DotName.createSimple(Object.class.getName());
+
+    public static final DotName LOCAL_DATETIME = DotName.createSimple(LocalDateTime.class.getName());
 
     private DotNames() {
     }

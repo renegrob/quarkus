@@ -68,7 +68,8 @@ public class MethodNameParser {
             DotNames.BYTE, DotNames.PRIMITIVE_BYTE,
             DotNames.CHARACTER, DotNames.PRIMITIVE_CHAR,
             DotNames.DOUBLE, DotNames.PRIMITIVE_DOUBLE,
-            DotNames.FLOAT, DotNames.PRIMITIVE_FLOAT));
+            DotNames.FLOAT, DotNames.PRIMITIVE_FLOAT,
+            DotNames.LOCAL_DATETIME));
 
     private final ClassInfo entityClass;
     private final IndexView indexView;
