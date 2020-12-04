@@ -145,6 +145,9 @@ public class CustomQueryMethodsAdder extends AbstractMethodsAdder {
 
                 if (isModifying) {
                     methodCreator.addAnnotation(Transactional.class);
+                    AnnotationInstance modifyingAnnotation = method.annotation(DotNames.SPRING_DATA_MODIFYING);
+                    handleFlushAutomatically(modifyingAnnotation, methodCreator, entityClassFieldDescriptor);
+
                     if (queryString.toLowerCase().startsWith("delete")) {
                         if (!DotNames.PRIMITIVE_LONG.equals(methodReturnTypeDotName)
                                 && !DotNames.LONG.equals(methodReturnTypeDotName)
@@ -212,6 +215,7 @@ public class CustomQueryMethodsAdder extends AbstractMethodsAdder {
                                             String.class, Object[].class),
                                     methodCreator.load(queryString), paramsArray);
                         }
+                        handleClearAutomatically(modifyingAnnotation, methodCreator, entityClassFieldDescriptor);
 
                         if (DotNames.VOID.equals(methodReturnTypeDotName)) {
                             methodCreator.returnValue(null);

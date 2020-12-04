@@ -4,12 +4,14 @@ import static org.hamcrest.CoreMatchers.containsString;
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkus.test.QuarkusDevModeTest;
 import io.restassured.RestAssured;
 
+@Disabled
 public class RepositoryReloadTest {
 
     @RegisterExtension

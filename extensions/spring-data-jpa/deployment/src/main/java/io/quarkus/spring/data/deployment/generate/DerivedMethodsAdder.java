@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.transaction.Transactional;
 
+import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
@@ -202,12 +203,17 @@ public class DerivedMethodsAdder extends AbstractMethodsAdder {
                     }
                     methodCreator.addAnnotation(Transactional.class);
 
+                    AnnotationInstance modifyingAnnotation = method.annotation(DotNames.SPRING_DATA_MODIFYING);
+                    handleFlushAutomatically(modifyingAnnotation, methodCreator, entityClassFieldDescriptor);
+
                     // call JpaOperations.delete()
                     ResultHandle delete = methodCreator.invokeStaticMethod(
                             MethodDescriptor.ofMethod(AdditionalJpaOperations.class, "deleteWithCascade", long.class,
                                     Class.class, String.class, Object[].class),
                             methodCreator.readInstanceField(entityClassFieldDescriptor, methodCreator.getThis()),
                             methodCreator.load(parseResult.getQuery()), paramsArray);
+
+                    handleClearAutomatically(modifyingAnnotation, methodCreator, entityClassFieldDescriptor);
 
                     if (DotNames.VOID.equals(returnType.name())) {
                         methodCreator.returnValue(null);

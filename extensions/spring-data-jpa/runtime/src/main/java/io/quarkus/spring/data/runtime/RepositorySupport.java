@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import javax.persistence.EntityManager;
+
 import io.quarkus.hibernate.orm.panache.runtime.JpaOperations;
 
 public final class RepositorySupport {
@@ -36,5 +38,15 @@ public final class RepositorySupport {
 
     public static Object getOne(Class<?> entityClass, Object id) {
         return JpaOperations.getEntityManager().getReference(entityClass, id);
+    }
+
+    public static void clear(Class<?> clazz) {
+        EntityManager em = JpaOperations.getEntityManager(clazz);
+        em.clear();
+    }
+
+    public static void flush(Class<?> clazz) {
+        EntityManager em = JpaOperations.getEntityManager(clazz);
+        em.flush();
     }
 }
