@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -184,7 +183,7 @@ public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundExceptio
                 }
             }
 
-            return new LinkedList<>(descriptions.values());
+            return new ArrayList<>(descriptions.values());
         }
     }
 
@@ -214,6 +213,13 @@ public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundExceptio
         List<ResourceDescription> descriptions = ResourceDescription
                 .fromBoundResourceInvokers(bounded
                         .entrySet());
+
+        descriptions.sort(Comparator.comparing(description -> description.basePath));
+        for (ResourceDescription description : descriptions) {
+            description.calls.sort(
+                    Comparator.comparing((MethodDescription methodDesc) -> methodDesc.fullPath)
+                            .thenComparing(methodDesc -> methodDesc.method));
+        }
 
         return respond(descriptions);
     }
