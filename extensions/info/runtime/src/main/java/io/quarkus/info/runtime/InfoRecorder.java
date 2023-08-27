@@ -52,7 +52,8 @@ public class InfoRecorder {
         };
     }
 
-    public Supplier<BuildInfo> buildInfoSupplier(String group, String artifact, String version, String time) {
+    public Supplier<BuildInfo> buildInfoSupplier(String group, String artifact, String version, String time,
+            Map<String, Object> buildTimeInfo) {
         return new Supplier<BuildInfo>() {
             @Override
             public BuildInfo get() {
@@ -76,51 +77,56 @@ public class InfoRecorder {
                     public OffsetDateTime time() {
                         return OffsetDateTime.parse(time, ISO_OFFSET_DATE_TIME);
                     }
+
+                    @Override
+                    public Map<String, Object> buildTimeInfo() {
+                        return buildTimeInfo;
+                    }
                 };
             }
         };
     }
 
-    public OsInfoContributor osInfoContributor() {
-        return new OsInfoContributor();
+    public InfoContributor osInfoContributor(OsInfoContributor osInfoContributor) {
+        return osInfoContributor;
     }
 
-    public Supplier<OsInfo> osInfoSupplier() {
+    public Supplier<OsInfo> osInfoSupplier(OsInfoContributor osInfoContributor) {
         return new Supplier<OsInfo>() {
             @Override
             public OsInfo get() {
                 return new OsInfo() {
                     @Override
                     public String name() {
-                        return OsInfoContributor.getName();
+                        return osInfoContributor.getName();
                     }
 
                     @Override
                     public String version() {
-                        return OsInfoContributor.getVersion();
+                        return osInfoContributor.getVersion();
                     }
 
                     @Override
                     public String architecture() {
-                        return OsInfoContributor.getArchitecture();
+                        return osInfoContributor.getArchitecture();
                     }
                 };
             }
         };
     }
 
-    public JavaInfoContributor javaInfoContributor() {
-        return new JavaInfoContributor();
+    public InfoContributor javaInfoContributor(JavaInfoContributor infoContributor) {
+        return infoContributor;
     }
 
-    public Supplier<JavaInfo> javaInfoSupplier() {
+    public Supplier<JavaInfo> javaInfoSupplier(JavaInfoContributor infoContributor) {
         return new Supplier<JavaInfo>() {
             @Override
             public JavaInfo get() {
                 return new JavaInfo() {
                     @Override
                     public String version() {
-                        return JavaInfoContributor.getVersion();
+                        return infoContributor.getVersion();
                     }
                 };
             }

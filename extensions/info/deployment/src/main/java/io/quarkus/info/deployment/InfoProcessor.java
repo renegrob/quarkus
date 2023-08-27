@@ -5,12 +5,7 @@ import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import java.io.File;
 import java.net.InetAddress;
 import java.time.OffsetDateTime;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import jakarta.inject.Singleton;
@@ -41,6 +36,8 @@ import io.quarkus.info.OsInfo;
 import io.quarkus.info.deployment.spi.InfoBuildTimeContributorBuildItem;
 import io.quarkus.info.deployment.spi.InfoBuildTimeValuesBuildItem;
 import io.quarkus.info.runtime.InfoRecorder;
+import io.quarkus.info.runtime.JavaInfoContributor;
+import io.quarkus.info.runtime.OsInfoContributor;
 import io.quarkus.info.runtime.spi.InfoContributor;
 import io.quarkus.maven.dependency.ResolvedDependency;
 import io.quarkus.vertx.http.deployment.NonApplicationRootPathBuildItem;
@@ -224,7 +221,7 @@ public class InfoProcessor {
         Map<String, Object> data = finalBuildData(buildData, config.build());
         valuesProducer.produce(new InfoBuildTimeValuesBuildItem("build", data));
         beanProducer.produce(SyntheticBeanBuildItem.configure(BuildInfo.class)
-                .supplier(recorder.buildInfoSupplier(group, artifact, version, time))
+                .supplier(recorder.buildInfoSupplier(group, artifact, version, time, data))
                 .scope(Singleton.class)
                 .setRuntimeInit()
                 .done());
@@ -244,9 +241,10 @@ public class InfoProcessor {
     void osInfo(InfoRecorder recorder,
             BuildProducer<InfoBuildTimeContributorBuildItem> valuesProducer,
             BuildProducer<SyntheticBeanBuildItem> beanProducer) {
-        valuesProducer.produce(new InfoBuildTimeContributorBuildItem(recorder.osInfoContributor()));
+        OsInfoContributor osInfoContributor = OsInfoContributor.create();
+        valuesProducer.produce(new InfoBuildTimeContributorBuildItem(recorder.osInfoContributor(osInfoContributor)));
         beanProducer.produce(SyntheticBeanBuildItem.configure(OsInfo.class)
-                .supplier(recorder.osInfoSupplier())
+                .supplier(recorder.osInfoSupplier(osInfoContributor))
                 .scope(Singleton.class)
                 .setRuntimeInit()
                 .done());
@@ -257,9 +255,12 @@ public class InfoProcessor {
     void javaInfo(InfoRecorder recorder,
             BuildProducer<InfoBuildTimeContributorBuildItem> valuesProducer,
             BuildProducer<SyntheticBeanBuildItem> beanProducer) {
-        valuesProducer.produce(new InfoBuildTimeContributorBuildItem(recorder.javaInfoContributor()));
+        JavaInfoContributor infoContributor = JavaInfoContributor.create();
+        valuesProducer
+                .produce(new InfoBuildTimeContributorBuildItem(
+                        recorder.javaInfoContributor(infoContributor)));
         beanProducer.produce(SyntheticBeanBuildItem.configure(JavaInfo.class)
-                .supplier(recorder.javaInfoSupplier())
+                .supplier(recorder.javaInfoSupplier(infoContributor))
                 .scope(Singleton.class)
                 .setRuntimeInit()
                 .done());

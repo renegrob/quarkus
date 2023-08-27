@@ -1,6 +1,7 @@
 package io.quarkus.info;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 public interface BuildInfo {
 
@@ -11,4 +12,6 @@ public interface BuildInfo {
     String version();
 
     OffsetDateTime time();
+
+    Map<String, Object> buildTimeInfo();
 }
